@@ -1,0 +1,14 @@
+name = "cafut"
+version = "0.1.0"
+license = "license"
+author = "Renato Zimmermann"
+maintainer = "renato.zimmermann@mail.utoronto.ca"
+copyright = "Copyright 2021, Renato Zimmermann"
+
+[build]
+auto-executables = true
+auto-tests = true
+auto-examples = true
+
+[install]
+library = false
