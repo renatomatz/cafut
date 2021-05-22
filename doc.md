@@ -1,3 +1,23 @@
+
+---
+project: renatomatz/cafut
+summary: Unit Testing for Coarray Fortran
+project_github: https://github.com/renatomatz/cafut.git
+author: Renato Zimmermann
+author_email: renato.zimmermann@mail.utoronto.ca
+github: https://github.com/renatomatz
+website: https://fortran-lang.org
+src_dir: ./src
+page_dir: ./doc
+media_dir: ./doc/media
+exclude_dir:./test
+source: true
+proc_internals: true
+sort: permission-alpha
+print_creation_date: true
+creation_date: %Y-%m-%d %H:%M %z
+---
+
 # cafut
 ## A unit testing library for Coarray Fortran.
 
