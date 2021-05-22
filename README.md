@@ -1,5 +1,4 @@
 # cafut
-## A unit testing library for Coarray Fortran.
 
 The point of this library is to provide a simple, object-oriented unit testing framework meant for applications using Coarray Fortran. As it is further developped, we place more importance in brevity than to features, and for that reason, this project aims at maintaining all code within a single module that can be placed with the tested scripts.
 
