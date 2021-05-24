@@ -12,3 +12,8 @@ auto-examples = true
 
 [install]
 library = false
+
+[[test]]
+name="runTests"
+source-dir="test"
+main="main.f90"

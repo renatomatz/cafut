@@ -5,44 +5,44 @@ use iso_fortran_env, only: real64
 implicit none
 
 !> Define real number kind.
-integer, parameter :: wp = real64
+integer, private, parameter :: wp = real64
 
 !> Define maximum name length.
-integer, parameter :: NAME_LENGTH = 20
+integer, private, parameter :: NAME_LENGTH = 20
 
 !> Define margin of floating point error for real value comparissons.
-real(kind=real64), parameter :: eps = 1.0d-5
+real(kind=real64), private, parameter :: eps = 1.0d-5
 
 !> Format of the start of a unit test.
-character(len=*), parameter :: TEST_START = &
+character(len=*), private, parameter :: TEST_START = &
     '("==================== ", A, " ====================")'
 
 !> Format of the end of a unit test.
-character(len=*), parameter :: TEST_END = &
+character(len=*), private, parameter :: TEST_END = &
     '(A, " FINISHED WITH ", I3, "/", I3, " TESTS PASSED")'
 
 !> Format of the start of a unit test.
-character(len=*), parameter :: SUBTEST_START = &
+character(len=*), private, parameter :: SUBTEST_START = &
     '("> ", A20)'
 
 !> Format of the end of a unit test.
-character(len=*), parameter :: SUBTEST_END = &
+character(len=*), private, parameter :: SUBTEST_END = &
     '("finished with" , I3, "/", I3, " images passed")'
 
 !> Format of the failure description of an image comparing real values.
-character(len=*), parameter :: SINGLE_VAL_FMT = &
+character(len=*), private, parameter :: SINGLE_VAL_FMT = &
     '(">> TEST FAILED | Image: ", I3, " | Got: ", F5.2, " | Expected: ", F5.2)'
 
 !> Format of the header for a failed test of an image comparring arrays.
-character(len=*), parameter :: ARR_VAL_IMG = &
+character(len=*), private, parameter :: ARR_VAL_IMG = &
     '(">> Image: ", I3)'
 
 !> String preceeding result array.
-character(len=*), parameter :: ARR_VAL_RES = &
+character(len=*), private, parameter :: ARR_VAL_RES = &
     ">>> Got: "
 
 !> String preceeding expected array.
-character(len=*), parameter :: ARR_VAL_EXP = &
+character(len=*), private, parameter :: ARR_VAL_EXP = &
     ">>> Expected: "
 
 private :: rootToAll, maxToRoot, maxToAll
@@ -61,8 +61,12 @@ type, public :: TestSuite
 
 contains
 
-    procedure, pass :: add => addUnitTest
-    procedure, pass :: runTests
+    procedure, public, pass :: addUnitTest
+    procedure, private, pass :: addTestRealVal
+    procedure, private, pass :: addTestRealArrVal
+    generic, public :: add => addUnitTest, addTestRealVal, addTestRealArrVal
+
+    procedure, public, pass :: runTests
     final :: deleteTestSuite
 
 end type TestSuite
@@ -109,8 +113,8 @@ type, public, extends(Test) :: TestRealVal
     real(kind=wp), public :: tgt
         !! Target real value result for some process.
 contains
-    procedure, pass :: run => runTestRealVal
-    procedure, nopass :: printFail => printFailTestRealVal
+    procedure, public, pass :: run => runTestRealVal
+    procedure, private, nopass :: printFail => printFailTestRealVal
     final :: deleteTestRealVal
 end type TestRealVal
 
@@ -140,13 +144,13 @@ type, public, extends(Test) :: TestRealArrVal
     procedure(realArrCompInterface), nopass, pointer :: compare
         !! Pointer to a comparisson function used to perform the test.
 
-    real(kind=wp), allocatable, dimension(:) :: res
+    real(kind=wp), public, allocatable, dimension(:) :: res
         !! Real array result from some process.
-    real(kind=wp), allocatable, dimension(:) :: tgt
+    real(kind=wp), public, allocatable, dimension(:) :: tgt
         !! Target real array result for some process.
 contains
-    procedure, pass :: run => runTestRealArrVal
-    procedure, nopass :: printFail => printFailTestRealArrVal
+    procedure, public, pass :: run => runTestRealArrVal
+    procedure, private, nopass :: printFail => printFailTestRealArrVal
     final :: deleteTestRealArrVal
 end type TestRealArrVal
 
@@ -310,11 +314,69 @@ subroutine addUnitTest(self, ut)
     if (this_image() == 1) self%n_tests = self%n_tests + 1
 
     allocate(next)
-
     next => self%test
+
     ut%next => next
     self%test => ut
 end subroutine addUnitTest
+
+subroutine addTestRealVal(self, ut, res, tgt)
+    !! Compact alternative to add a TestRealVal object to the test suite.
+
+    class(TestSuite), intent(inout) :: self
+    type(TestRealVal), intent(in) :: ut
+        !! An initialized TestRealVal object with the desired name.
+    real(kind=wp), intent(in) :: res, tgt
+        !! See TestRealVal.
+
+    class(Test), pointer :: next
+        
+    if (this_image() == 1) self%n_tests = self%n_tests + 1
+
+    allocate(next)
+    next => self%test
+
+    allocate(self%test, source=ut)
+
+    associate (t => self%test)
+    select type(t)
+    type is (TestRealVal)
+        t%next => next
+        t%test_name = ut%test_name
+        t%res = res
+        t%tgt = tgt
+    end select
+    end associate
+end subroutine addTestRealVal
+
+subroutine addTestRealArrVal(self, ut, res, tgt)
+    !! Compact alternative to add a TestRealArrVal object to the test suite.
+
+    class(TestSuite), intent(inout) :: self
+    type(TestRealArrVal), intent(in) :: ut
+        !! An initialized TestRealArrVal object with the desired name.
+    real(kind=wp), allocatable, dimension(:) :: res, tgt
+        !! See TestRealArrVal.
+
+    class(Test), pointer :: next
+        
+    if (this_image() == 1) self%n_tests = self%n_tests + 1
+
+    allocate(next)
+    next => self%test
+
+    allocate(self%test, source=ut)
+
+    associate (t => self%test)
+    select type(t)
+    type is (TestRealArrVal)
+        t%next => next
+        t%test_name = ut%test_name
+        t%res = res
+        t%tgt = tgt
+    end select
+    end associate
+end subroutine addTestRealArrVal
 
 ! Test
 ! ====
