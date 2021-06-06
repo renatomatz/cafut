@@ -53,10 +53,38 @@ cafut = { git = "https://github.com/renatomatz/cafut.git" }
 
 You can then `use` the package in your testing programs with `use cafut`.
 
-# Objects
-
-TODO: write description of the main objects.
-
 # Examples
 
-TODO: write examples
+This framework centers around creating a linked list of unit tests. The two principal objects of the framework are the `TestSuite`, which is the first node of the linked list, and types extending the `Test` abstract type, which are the nodes of the list. In other words, the `TestSuite` type contains any number of `Test` objects, which it will execute and collect data from.
+
+To create a new test suite, simply instanciate a `TestSuite` object, giving it an appropriate name.
+
+```fortran
+ts = TestSuite("TEST 1")
+```
+
+There are two ways to add new tests to a `TestSuite` object. One is to create and set up a `Test` instance externally and then add said the instance to the test suite.
+
+```fortran
+trv = TestRealVal("subtest 1.2")
+trv%res = 1. + 1.
+trv%tgt = 2.
+call ts%add(trv)
+```
+
+The other is to add a test directly into the test suite by using one of the subroutines linked to the `add` generic procedure. To do this, just specify the new `Test` instance (which must be constructed with a name) as the first argument to the `add` procedure followed by the required arguments.
+
+```fortran
+call ts%add(TestRealVal("subtest 1.1"), 1.+1., 2.)
+```
+
+**NOTE** that tests which involve arrays which are created externally must allocate the relevant attributes externally as well.
+
+```fortran
+trav = TestRealArrVal("subtest 1.3")
+allocate(trav%res(2), trav%tgt(2))
+trav2%res = [1., 1.]
+trav2%tgt = [2., 2.]
+call ts%add(trav)
+```
+

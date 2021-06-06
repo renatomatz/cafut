@@ -45,8 +45,6 @@ character(len=*), private, parameter :: ARR_VAL_RES = &
 character(len=*), private, parameter :: ARR_VAL_EXP = &
     ">>> Expected: "
 
-private :: rootToAll, maxToRoot, maxToAll
-
 type, public :: TestSuite
     !! Holds tests and manages their executtion.
     !! Represents a set of procedures to test a certain feature.
@@ -173,92 +171,6 @@ end interface
 
 contains
 
-! Private Helper Methods
-! ======================
-
-function rootToAll(x) result(s)
-    !! Helper method to spread a value from the root image (1) to all other
-    !! images.
-
-    integer, intent(in) :: x
-        !! Value being spread. The only value actually spread is the one
-        !! input by the root image (1). The values input by all other 
-        !! images will be ignored (and not modified).
-    integer :: s
-        !! Return the value input by the root image (1). This will be the same
-        !! for all images.
-
-    integer, allocatable, codimension[:]  :: y
-    integer :: L, me, p
-
-        me = this_image()
-        p = num_images()
-
-        allocate(y[*])
-        !TODO: add error checking to all allocate statements.
-
-        if (me == 1) y[1] = x
-        sync all
-
-        L = 1
-        do while (L < p)
-            L = 2*L
-        end do
-        do while (L > 0)
-            if ((me+L <= p).and.(mod(me-1,2*L)==0)) y[me+L] = y
-            L = L/2
-            sync all
-        end do
-        s = y
-end function rootToAll
-
-function maxToRoot(x) result(s)
-    !! Helper method to return the maximum value from the inputs of each image
-    !! to the root image (1) only.
-
-    integer, intent(in) :: x
-        !! Input by each image. This value will be compared to the values 
-        !! input by every other image.
-    integer :: s
-        !! Return the maximum value from all `x` inputs from all images. This
-        !! will only be significant to the root image (1); the return to every
-        !! other image will not be significant and thus should not be used by
-        !! them in any way.
-
-    integer, allocatable, codimension[:]  :: y
-    integer :: L, me, p
-
-        me = this_image()
-        p = num_images()
-
-        allocate(y[*])
-        y = x
-        sync all
-
-        L = 1
-        do while (L < p)
-            if ((me+L <= p).and.(mod(me-1,2*L)==0)) y = max(y, y[me+L])
-            L = 2*L
-            sync all
-        end do
-
-        s = 0.0
-        if (me == 1) s = y[1]
-end function maxToRoot
-
-function maxToAll(x) result(s)
-    !! Helper method to collect inputs from every image and return the largest
-    !! of these inputs back to each image.
-
-    integer, intent(in) :: x
-        !! Value input by each image, which will be compared to the inputs of 
-        !! all other images.
-    integer :: s
-        !! The maximum value from the ones input into `x`.
-
-        s = rootToAll(maxToRoot(x))
-end function maxToAll
-
 ! TestSuite
 ! =========
 
@@ -313,7 +225,7 @@ subroutine addUnitTest(self, ut)
         
     if (this_image() == 1) self%n_tests = self%n_tests + 1
 
-    allocate(next)
+    if (associated(self%test)) allocate(next, source=self%test)
     next => self%test
 
     ut%next => next
@@ -333,7 +245,7 @@ subroutine addTestRealVal(self, ut, res, tgt)
         
     if (this_image() == 1) self%n_tests = self%n_tests + 1
 
-    allocate(next)
+    if (associated(self%test)) allocate(next, source=self%test)
     next => self%test
 
     allocate(self%test, source=ut)
@@ -362,7 +274,7 @@ subroutine addTestRealArrVal(self, ut, res, tgt)
         
     if (this_image() == 1) self%n_tests = self%n_tests + 1
 
-    allocate(next)
+    if (associated(self%test)) allocate(next, source=self%test)
     next => self%test
 
     allocate(self%test, source=ut)
@@ -565,8 +477,10 @@ function runTestRealArrVal(self) result(tests_passed)
     res_n = size(self%res)
     tgt_n = size(self%tgt)
 
-    max_res_n = maxToAll(res_n)
-    max_tgt_n = maxToAll(tgt_n)
+    max_res_n = res_n
+    call co_max(max_res_n)
+    max_tgt_n = tgt_n
+    call co_max(max_tgt_n)
 
     allocate(res(max_res_n)[*], tgt(max_tgt_n)[*])
     res(:res_n) = self%res
