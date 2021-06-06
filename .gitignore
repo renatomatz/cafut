@@ -1,2 +1,4 @@
 build/*
 cafut-site/*
+src/**/*.mod
+test/**/*.mod
