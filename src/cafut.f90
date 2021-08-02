@@ -11,7 +11,7 @@ integer, private, parameter :: wp = real64
 integer, private, parameter :: NAME_LENGTH = 20
 
 !> Define margin of floating point error for real value comparissons.
-real(kind=real64), private, parameter :: eps = 1.0d-5
+real(kind=real64), private, parameter :: default_eps = 1.0d-5
 
 !> Format of the start of a unit test.
 character(len=*), private, parameter :: TEST_START = &
@@ -106,6 +106,8 @@ type, public, extends(Test) :: TestRealVal
 
     procedure(realCompInterface), public, nopass, pointer :: compare
         !! Pointer to a comparisson function used to perform the test.
+    real(kind=wp), private :: eps
+        !! Allowed margin of error between real numbers
     real(kind=wp), public :: res
         !! Real value result from some process.
     real(kind=wp), public :: tgt
@@ -123,7 +125,7 @@ interface TestRealVal
 end interface TestRealVal
 
 interface
-    function realCompInterface(res, tgt) result(comp)
+    function realCompInterface(res, tgt, eps) result(comp)
         !! Abstract function interface for a value comparisson function.
 
         import wp
@@ -131,6 +133,8 @@ interface
             !! Result being tested.
         real(kind=wp), intent(in) :: tgt
             !! Target value used to compare result to.
+        real(kind=wp) :: eps
+            !! Allowed margin of error
         logical :: comp
             !! Return whether or not the test succeeded based on a comparrison.
     end function realCompInterface
@@ -142,6 +146,8 @@ type, public, extends(Test) :: TestRealArrVal
     procedure(realArrCompInterface), nopass, pointer :: compare
         !! Pointer to a comparisson function used to perform the test.
 
+    real(kind=wp), private :: eps
+        !! Allowed margin of error between real numbers
     real(kind=wp), public, allocatable, dimension(:) :: res
         !! Real array result from some process.
     real(kind=wp), public, allocatable, dimension(:) :: tgt
@@ -159,11 +165,13 @@ interface TestRealArrVal
 end interface TestRealArrVal
 
 interface
-    function realArrCompInterface(res, tgt) result(comp)
+    function realArrCompInterface(res, tgt, eps) result(comp)
         !! Abstract function interface for an array comparisson function.
         import wp
         real(kind=wp), dimension(:), intent(in) :: res, tgt
             !! See res and tgt in TestRealArrVal class.
+        real(kind=wp) :: eps
+            !! Allowed margin of error
         logical :: comp
             !! Return whether or not the test succeeded based on a comparrison.
     end function realArrCompInterface
@@ -295,7 +303,7 @@ end subroutine addTestRealArrVal
 
 ! Comparison Functions
 
-function realEq(res, tgt) result(comp)
+function realEq(res, tgt, eps) result(comp)
     !! Test if two real values are equal. Uses an epsilon value to account
     !! for floating point error.
 
@@ -303,13 +311,15 @@ function realEq(res, tgt) result(comp)
         !! Real value result being tested.
     real(kind=wp), intent(in) :: tgt
         !! Target real value to compare result to.
+    real(kind=wp) :: eps
+        !! Allowed margin of error
     logical :: comp
         !! Return whether both values are equal.
 
     comp = abs(res-tgt) < eps
 end function realEq
 
-function realArrEq(res, tgt) result(comp)
+function realArrEq(res, tgt, eps) result(comp)
     !! Test if two real arrays are _exactly_ equal. Arrays must be of the
     !! same length and have the same values in the same positions. Uses
     !! epsilon value to account for floating point error.
@@ -318,6 +328,8 @@ function realArrEq(res, tgt) result(comp)
         !! Real value result being tested.
     real(kind=wp), dimension(:), intent(in) :: tgt
         !! Target real value to compare result to.
+    real(kind=wp) :: eps
+        !! Allowed margin of error
     logical :: comp
 
     if (size(res) /= size(tgt)) then
@@ -330,15 +342,22 @@ end function realArrEq
 
 ! Constructors
 
-function newTestRealVal_name(ts_name) result(new_ts)
+function newTestRealVal_name(ts_name, eps) result(new_ts)
     !! Construct new TestRealVal given a name.
 
     character(len=*), intent(in) :: ts_name
         !! Name of the new TestRealVal object.
+    real(kind=wp), optional :: eps
+        !! Allowed margin of error
     type(TestRealVal) :: new_ts
         !! Return new TestRealVal object.
 
     new_ts%test_name = ts_name
+    if (present(eps)) then
+        new_ts%eps = eps
+    else
+        new_ts%eps = default_eps
+    end if
     new_ts%next => null()
     new_ts%compare => realEq
     !TODO: create a bunch of subclasses with different comparisson
@@ -347,15 +366,22 @@ function newTestRealVal_name(ts_name) result(new_ts)
     new_ts%tgt = 0
 end function newTestRealVal_name
 
-function newTestRealArrVal_name(ts_name) result(new_ts)
+function newTestRealArrVal_name(ts_name, eps) result(new_ts)
     !! Construct new TestRealArrVal given a name.
 
     character(len=*), intent(in) :: ts_name
         !! Name of the new TestRealArrVal object.
+    real(kind=wp), optional :: eps
+        !! Allowed margin of error
     type(TestRealArrVal) :: new_ts
         !! Return new TestRealArrVal object.
 
     new_ts%test_name = ts_name
+    if (present(eps)) then
+        new_ts%eps = eps
+    else
+        new_ts%eps = default_eps
+    end if
     new_ts%next => null()
     new_ts%compare => realArrEq
     !TODO: create a bunch of subclasses with different comparisson
@@ -441,7 +467,7 @@ function runTestRealVal(self) result(tests_passed)
     if (this_image() == 1) then
         print SUBTEST_START, self%test_name
         do i=1, num_images()
-            if (self%compare(res[i], tgt[i])) then
+            if (self%compare(res[i], tgt[i], self%eps)) then
                 img_passed = img_passed + 1
             else
                 call self%printFail(i, res[i], tgt[i])
@@ -491,7 +517,7 @@ function runTestRealArrVal(self) result(tests_passed)
     if (this_image() == 1) then
         print SUBTEST_START, self%test_name
         do i=1, num_images()
-            if (self%compare(res(:res_n[i])[i], tgt(:tgt_n[i])[i])) then
+            if (self%compare(res(:res_n[i])[i], tgt(:tgt_n[i])[i], self%eps)) then
                 img_passed = img_passed + 1
             else
                 call self%printFail(i, res(:res_n[i])[i], tgt(:tgt_n[i])[i])
