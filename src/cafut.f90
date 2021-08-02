@@ -31,7 +31,7 @@ character(len=*), private, parameter :: SUBTEST_END = &
 
 !> Format of the failure description of an image comparing real values.
 character(len=*), private, parameter :: SINGLE_VAL_FMT = &
-    '(">> TEST FAILED | Image: ", I3, " | Got: ", F5.2, " | Expected: ", F5.2)'
+    '(">> TEST FAILED | Image: ", I3, " | Got: ", F10.5, " | Expected: ", F10.5)'
 
 !> Format of the header for a failed test of an image comparring arrays.
 character(len=*), private, parameter :: ARR_VAL_IMG = &
@@ -81,25 +81,25 @@ type, abstract, private :: Test
     character(len=NAME_LENGTH), public :: test_name
         !! Name of the test case.
     class(Test), private, pointer :: next
-        !! Next test case or null() if this is the first test inserted (last 
+        !! Next test case or null() if this is the first test inserted (last
         !! test in the linked list).
 contains
     procedure(runInterface), deferred, pass :: run
 end type Test
 
-abstract interface 
+abstract interface
     function runInterface(self) result(tests_passed)
         !! Abstract function interface for running a test.
 
         import Test
         class(Test), intent(in) :: self
-            !! The test itself. The Test object should contain all information 
+            !! The test itself. The Test object should contain all information
             !! needed to run the test.
         integer :: tests_passed
             !! Return total number of tests which passed in the linked list
             !! up to and including this test.
     end function runInterface
-end interface 
+end interface
 
 type, public, extends(Test) :: TestRealVal
     !! Test performed on single real values.
@@ -222,7 +222,7 @@ subroutine addUnitTest(self, ut)
         !! Object derived from the Test abstract type.
 
     class(Test), pointer :: next
-        
+
     if (this_image() == 1) self%n_tests = self%n_tests + 1
 
     if (associated(self%test)) allocate(next, source=self%test)
@@ -242,7 +242,7 @@ subroutine addTestRealVal(self, ut, res, tgt)
         !! See TestRealVal.
 
     class(Test), pointer :: next
-        
+
     if (this_image() == 1) self%n_tests = self%n_tests + 1
 
     if (associated(self%test)) allocate(next, source=self%test)
@@ -271,7 +271,7 @@ subroutine addTestRealArrVal(self, ut, res, tgt)
         !! See TestRealArrVal.
 
     class(Test), pointer :: next
-        
+
     if (this_image() == 1) self%n_tests = self%n_tests + 1
 
     if (associated(self%test)) allocate(next, source=self%test)
@@ -300,7 +300,7 @@ function realEq(res, tgt) result(comp)
     !! for floating point error.
 
     real(kind=wp), intent(in) :: res
-        !! Real value result being tested. 
+        !! Real value result being tested.
     real(kind=wp), intent(in) :: tgt
         !! Target real value to compare result to.
     logical :: comp
@@ -315,7 +315,7 @@ function realArrEq(res, tgt) result(comp)
     !! epsilon value to account for floating point error.
 
     real(kind=wp), dimension(:), intent(in) :: res
-        !! Real value result being tested. 
+        !! Real value result being tested.
     real(kind=wp), dimension(:), intent(in) :: tgt
         !! Target real value to compare result to.
     logical :: comp
@@ -364,14 +364,14 @@ end function newTestRealArrVal_name
 
 ! Destructors
 
-subroutine deleteTestRealVal(self) 
+subroutine deleteTestRealVal(self)
     !! Destruct TestRealVal object by deallocating its next object pointer.
 
     type(TestRealVal), intent(inout) :: self
     deallocate(self%next)
 end subroutine deleteTestRealVal
 
-subroutine deleteTestRealArrVal(self) 
+subroutine deleteTestRealArrVal(self)
     !! Destruct TestRealVal object by deallocating its next object pointer
     !! as well as its res and tgt arrays.
 
@@ -407,7 +407,7 @@ subroutine printFailTestRealArrVal(img, res, tgt)
         !! (Correct) target result array of some procedure.
 
     print ARR_VAL_IMG, img
-    print '(A)', ARR_VAL_RES 
+    print '(A)', ARR_VAL_RES
     print *, res
     print '(A)', ARR_VAL_EXP
     print *, tgt
