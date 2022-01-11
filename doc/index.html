@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+   
+   <meta name="description" content="Unit Testing for Coarray Fortran">
+    
+    <meta name="author" content="Renato Zimmermann" >
+    <link rel="icon" href="./favicon.png">
+
+    <title> cafut </title>
+
+    <link href="./css/bootstrap.min.css" rel="stylesheet">
+    <link href="./css/pygments.css" rel="stylesheet">
+    <link href="./css/font-awesome.min.css" rel="stylesheet">
+    <link href="./css/local.css" rel="stylesheet">
+    
+    <link  href="./tipuesearch/tipuesearch.css" rel="stylesheet">
+    
+    
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+    
+    <script src="./js/jquery-2.1.3.min.js"></script>
+    <script src="./js/svg-pan-zoom.min.js"></script>
+
+  </head>
+
+  <body>
+
+    <!-- Fixed navbar -->
+    <nav class="navbar navbar-inverse navbar-fixed-top">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="./index.html">cafut </a>
+        </div>
+        <div id="navbar" class="navbar-collapse collapse">
+          <ul class="nav navbar-nav">
+        
+            <li class="dropdown hidden-xs visible-sm visible-md hidden-lg">
+              <a href="#" class="dropdown-toggle"
+              data-toggle="dropdown" role="button"
+              aria-haspopup="true"
+     aria-expanded="false">Contents <span class="caret"></span></a>
+        <ul class="dropdown-menu">
+          
+              
+            <li><a href="./sourcefile/cafut.f90.html">Source File</a></li>
+        
+        
+        
+            <li><a href="./lists/modules.html">Modules</a></li>
+        
+            
+                                
+            <li><a href="./lists/procedures.html">Procedures</a></li>
+        
+        
+            <li><a href="./lists/absint.html">Abstract Interfaces</a></li>
+               
+            <li><a href="./lists/types.html">Derived Types</a></li>
+        
+               
+        
+        
+            </ul>
+        
+            </li>
+
+
+<li class="visible-xs hidden-sm visible-lg"><a href="./sourcefile/cafut.f90.html">Source File</a></li>
+
+
+
+<li class="visible-xs hidden-sm visible-lg"><a href="./lists/modules.html">Modules</a></li>
+
+
+
+<li class="visible-xs hidden-sm visible-lg"><a href="./lists/procedures.html">Procedures</a></li>
+
+
+<li class="visible-xs hidden-sm visible-lg"><a href="./lists/absint.html">Abstract Interfaces</a></li>
+                             
+<li class="visible-xs hidden-sm visible-lg"><a href="./lists/types.html">Derived Types</a></li>
+
+
+
+
+          </ul>
+        
+        <form action="./search.html" class="navbar-form navbar-right" role="search">
+        <div class="form-group">
+          <input type="text" class="form-control" placeholder="Search" name="q" id="tipue_search_input" autocomplete="off" required>
+        </div>
+<!--
+        <button type="submit" class="btn btn-default">Submit</button>
+-->
+        </form>
+        
+        </div><!--/.nav-collapse -->
+      </div>
+    </nav>
+
+    <div class="container">
+    
+      <!-- Main component for a primary marketing message or call to action -->
+      <div class="jumbotron">
+        <p>Unit Testing for Coarray Fortran</p>
+        	 
+	<p> Find us on&hellip;</p>
+        <p>
+			 
+          <a class="btn btn-lg btn-primary" href="https://github.com/renatomatz/cafut.git" role="button">GitHub</a>
+			 
+			 
+			 
+			 
+			 
+	         
+			 
+        </p>
+      </div>
+
+      <div class="row" id='text'>
+		  
+        <div class="col-md-8">
+		  
+          <h1>cafut</h1>
+          <p>The point of this library is to provide a simple, object-oriented unit testing framework meant for applications using Coarray Fortran. As it is further developped, we place more importance in brevity than to features, and for that reason, this project aims at maintaining all code within a single module that can be placed with the tested scripts.</p>
+<p>Other unit testing frameworks for Fortran (that I know of) give unorganized outputs when the program is meant to run in parallel using Coarrays. This ultimately comes down to coordinating test results amongst images such that test summaries are more organized and informative when it comes to the results of each image. Workarounds that revolve around adapting tests to immitate parallel behavior will run slower and everything else that made you want to write a parallel program in the first place.</p>
+<h1>Setup</h1>
+<p>To use cafut to its fullest, your compiler must have implemented Fortran Coarrays. In the examples shown bellow, I will be using <a href="https://github.com/sourceryinstitute/OpenCoarrays">OpenCoarrays</a>, though there are several other options available. </p>
+<p>If you wish to compile cafut for testing with a single image (such as using cafut for sequential programs), you can add the <code>-fcoarray=single</code> flag to gcc in order to compile the program.</p>
+<h3>Quick and Dirty</h3>
+<p>If you want to use cafut for some quick tests on a specific file, start by cloning cafut and generating the necessary .mod file with:</p>
+<div class="codehilite"><pre><span></span><code>git clone https://github.com/renatomatz/cafut.git
+<span class="nb">cd</span> cafut/src/
+caf -c cafut.f90
+</code></pre></div>
+
+<p>where <code>caf</code> is the OpenCoarray compiler for using cafut with multiple images.</p>
+<p>Then, just add the <code>cafut.mod</code> file, which should be an output from the above command, to the same directory that the program you wish to test is located. To use cafut, simply add <code>use cafut</code> to the test program.</p>
+<h3>Fortran Package Manager (fpm)</h3>
+<p>To use cafut for testing in your <a href="https://github.com/fortran-lang/fpm">fpm</a> project without making it a build dependency, just add the following to your package manifest file (<code>fpm.toml</code>) under the relevant test descriptions (which in the example bellow, we call <em>main</em>):</p>
+<div class="codehilite"><pre><span></span><code><span class="k">[[ test ]]</span><span class="w"></span>
+<span class="n">name</span><span class="o">=</span><span class="s">&quot;main&quot;</span><span class="w"></span>
+<span class="n">source-dir</span><span class="o">=</span><span class="s">&quot;test/&quot;</span><span class="w"></span>
+<span class="n">main</span><span class="o">=</span><span class="s">&quot;main.f90&quot;</span><span class="w"></span>
+<span class="k">[test.dependencies]</span><span class="w"></span>
+<span class="n">cafut</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">git</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;https://github.com/renatomatz/cafut.git&quot;</span><span class="w"> </span><span class="p">}</span><span class="w"></span>
+</code></pre></div>
+
+<p>You can then <code>use</code> the package in your testing programs with <code>use cafut</code>.</p>
+<h1>Examples</h1>
+<p>This framework centers around creating a linked list of unit tests. The two principal objects of the framework are the <code>TestSuite</code>, which is the first node of the linked list, and types extending the <code>Test</code> abstract type, which are the nodes of the list. In other words, the <code>TestSuite</code> type contains any number of <code>Test</code> objects, which it will execute and collect data from.</p>
+<p>To create a new test suite, simply instanciate a <code>TestSuite</code> object, giving it an appropriate name.</p>
+<div class="codehilite"><pre><span></span><code><span class="n">ts</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">TestSuite</span><span class="p">(</span><span class="s2">&quot;TEST 1&quot;</span><span class="p">)</span><span class="w"></span>
+</code></pre></div>
+
+<p>There are two ways to add new tests to a <code>TestSuite</code> object. One is to create and set up a <code>Test</code> instance externally and then add said the instance to the test suite.</p>
+<div class="codehilite"><pre><span></span><code><span class="n">trv</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">TestRealVal</span><span class="p">(</span><span class="s2">&quot;subtest 1.2&quot;</span><span class="p">)</span><span class="w"></span>
+<span class="n">trv</span><span class="p">%</span><span class="n">res</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">1.</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">1.</span><span class="w"></span>
+<span class="n">trv</span><span class="p">%</span><span class="n">tgt</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">2.</span><span class="w"></span>
+<span class="k">call </span><span class="n">ts</span><span class="p">%</span><span class="n">add</span><span class="p">(</span><span class="n">trv</span><span class="p">)</span><span class="w"></span>
+</code></pre></div>
+
+<p>The other is to add a test directly into the test suite by using one of the subroutines linked to the <code>add</code> generic procedure. To do this, just specify the new <code>Test</code> instance (which must be constructed with a name) as the first argument to the <code>add</code> procedure followed by the required arguments.</p>
+<div class="codehilite"><pre><span></span><code><span class="k">call </span><span class="n">ts</span><span class="p">%</span><span class="n">add</span><span class="p">(</span><span class="n">TestRealVal</span><span class="p">(</span><span class="s2">&quot;subtest 1.1&quot;</span><span class="p">),</span><span class="w"> </span><span class="mf">1.</span><span class="o">+</span><span class="mf">1.</span><span class="p">,</span><span class="w"> </span><span class="mf">2.</span><span class="p">)</span><span class="w"></span>
+</code></pre></div>
+
+<p><strong>NOTE</strong> that tests which involve arrays which are created externally must allocate the relevant attributes externally as well.</p>
+<div class="codehilite"><pre><span></span><code><span class="n">trav</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">TestRealArrVal</span><span class="p">(</span><span class="s2">&quot;subtest 1.3&quot;</span><span class="p">)</span><span class="w"></span>
+<span class="k">allocate</span><span class="p">(</span><span class="n">trav</span><span class="p">%</span><span class="n">res</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span><span class="w"> </span><span class="n">trav</span><span class="p">%</span><span class="n">tgt</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span><span class="w"></span>
+<span class="n">trav2</span><span class="p">%</span><span class="n">res</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="mf">1.</span><span class="p">,</span><span class="w"> </span><span class="mf">1.</span><span class="p">]</span><span class="w"></span>
+<span class="n">trav2</span><span class="p">%</span><span class="n">tgt</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="mf">2.</span><span class="p">,</span><span class="w"> </span><span class="mf">2.</span><span class="p">]</span><span class="w"></span>
+<span class="k">call </span><span class="n">ts</span><span class="p">%</span><span class="n">add</span><span class="p">(</span><span class="n">trav</span><span class="p">)</span><span class="w"></span>
+</code></pre></div>
+        </div>
+		  
+        <div class="col-md-4">
+	  <div class="well">
+          <h2>Developer Info</h2>
+          <h4>Renato Zimmermann</h4>
+          
+          
+			   
+            <div class="text-center"><div class="btn-group" role="group">
+              
+              
+              
+              <a class="btn btn-lg btn-primary" href="https://github.com/renatomatz"><i class="fa fa-github fa-lg"></i></a>
+              
+              
+				  
+              
+              
+              
+              
+            </div></div>
+            
+       </div>
+       </div>
+       
+      </div>
+      
+      
+      
+      
+      
+      
+		
+        
+      <div class="row">
+        
+        <div class="col-xs-6 col-sm-3">
+              <h3>Source Files</h3>
+              <ul>
+                    <li><a href='./sourcefile/cafut.f90.html'>cafut.f90</a></li>
+                  </ul>
+          </div>
+        
+          
+		  <div class="col-xs-6 col-sm-3">
+              <h3>Modules</h3>
+              <ul>
+                    <li><a href='./module/cafut.html'>cafut</a></li>
+                  </ul>
+          </div>
+          
+          
+		  <div class="col-xs-6 col-sm-3">
+              <h3>Procedures</h3>
+              <ul>
+                    <li><a href='./proc/addtestrealarrval.html'>addTestRealArrVal</a></li>
+                  
+                    <li><a href='./proc/addtestrealval.html'>addTestRealVal</a></li>
+                  
+                    <li><a href='./proc/addunittest.html'>addUnitTest</a></li>
+                  
+                    <li><a href='./proc/deletetestrealarrval.html'>deleteTestRealArrVal</a></li>
+                  
+                    <li><a href='./proc/deletetestrealval.html'>deleteTestRealVal</a></li>
+                  
+                    <li><a href='./proc/deletetestsuite.html'>deleteTestSuite</a></li>
+                  
+                    <li><a href='./proc/newtestrealarrval_name.html'>newTestRealArrVal_name</a></li>
+                  
+                    <li><a href='./proc/newtestrealval_name.html'>newTestRealVal_name</a></li>
+                  
+                    <li><a href='./proc/newtestsuite.html'>newTestSuite</a></li>
+                  
+                    <li><a href='./proc/printfailtestrealarrval.html'>printFailTestRealArrVal</a></li>
+                  </ul>
+          </div>
+          
+          
+		  <div class="col-xs-6 col-sm-3">
+              <h3>Derived Types</h3>
+              <ul>
+                    <li><a href='./type/test.html'>Test</a></li>
+                  
+                    <li><a href='./type/testrealarrval.html'>TestRealArrVal</a></li>
+                  
+                    <li><a href='./type/testrealval.html'>TestRealVal</a></li>
+                  
+                    <li><a href='./type/testsuite.html'>TestSuite</a></li>
+                  </ul>
+          </div>
+          
+      </div>
+      
+
+    <hr>    
+    </div> <!-- /container -->
+    <footer>
+      <div class="container">
+      <div class="row">
+        <div class="col-xs-6 col-md-6"><p>cafut was developed by Renato Zimmermann<br>&copy; 2022 
+                                          </p>
+        </div>
+        <div class="col-xs-6 col-md-6">
+          <p class="text-right">
+            Documentation generated by 
+            <a href="https://github.com/Fortran-FOSS-Programmers/ford">FORD</a>
+             on 2022-01-11 13:47  
+            
+          </p>
+        </div>
+      </div>
+      <br>
+      </div> <!-- /container -->    
+    </footer>
+
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+<!--
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+-->
+    <script src="./js/bootstrap.min.js"></script>
+    <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+    <script src="./js/ie10-viewport-bug-workaround.js"></script>
+
+    <!-- MathJax JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script type="text/x-mathjax-config">
+      MathJax.Hub.Config({
+        TeX: { extensions: ['AMSmath.js','AMSsymbols.js','noErrors.js','noUndefined.js'], equationNumbers: { autoNumber: 'AMS' } },
+        jax: ['input/TeX','input/MathML','output/HTML-CSS'],
+        extensions: ['tex2jax.js','mml2jax.js','MathMenu.js','MathZoom.js']
+      });
+    </script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    
+    <script src="./tipuesearch/tipuesearch_content.js"></script>
+    <script src="./tipuesearch/tipuesearch_set.js"></script>
+    <script src="./tipuesearch/tipuesearch.js"></script>
+    
+    
+  </body>
+</html>

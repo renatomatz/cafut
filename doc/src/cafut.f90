@@ -8,7 +8,7 @@ implicit none
 integer, private, parameter :: wp = real64
 
 !> Define maximum name length.
-integer, private, parameter :: NAME_LENGTH = 50
+integer, private, parameter :: NAME_LENGTH = 20
 
 !> Define margin of floating point error for real value comparissons.
 real(kind=real64), private, parameter :: default_eps = 1.0d-5
