@@ -394,7 +394,7 @@ subroutine deleteTestRealVal(self)
     !! Destruct TestRealVal object by deallocating its next object pointer.
 
     type(TestRealVal), intent(inout) :: self
-    deallocate(self%next)
+    if (associated(self%next)) deallocate(self%next)
 end subroutine deleteTestRealVal
 
 subroutine deleteTestRealArrVal(self)
@@ -402,9 +402,9 @@ subroutine deleteTestRealArrVal(self)
     !! as well as its res and tgt arrays.
 
     type(TestRealArrVal), intent(inout) :: self
-    deallocate(self%next)
-    deallocate(self%res)
-    deallocate(self%tgt)
+    if (associated(self%next)) deallocate(self%next)
+    if (allocated(self%res)) deallocate(self%res)
+    if (allocated(self%tgt)) deallocate(self%tgt)
 end subroutine deleteTestRealArrVal
 
 ! Print Fail Functions
