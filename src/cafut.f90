@@ -200,7 +200,7 @@ subroutine deleteTestSuite(self)
     !! Destruct a test suite by deallocating its test pointer attribute.
     type(TestSuite), intent(inout) :: self
 
-    deallocate(self%test)
+    if (associated(self%test)) deallocate(self%test)
 end subroutine deleteTestSuite
 
 subroutine runTests(self)
