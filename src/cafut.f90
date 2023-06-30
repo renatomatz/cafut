@@ -8,7 +8,7 @@ implicit none
 integer, private, parameter :: wp = real64
 
 !> Define maximum name length.
-integer, private, parameter :: NAME_LENGTH = 50
+integer, private, parameter :: NAME_LENGTH = 140
 
 !> Define margin of floating point error for real value comparissons.
 real(kind=real64), private, parameter :: default_eps = 1.0d-5
@@ -23,7 +23,7 @@ character(len=*), private, parameter :: TEST_END = &
 
 !> Format of the start of a unit test.
 character(len=*), private, parameter :: SUBTEST_START = &
-    '("> ", A20)'
+    '("> ", A)'
 
 !> Format of the end of a unit test.
 character(len=*), private, parameter :: SUBTEST_END = &
@@ -441,7 +441,7 @@ end subroutine printFailTestRealArrVal
 
 ! Run Functions
 
-function runTestRealVal(self) result(tests_passed)
+recursive function runTestRealVal(self) result(tests_passed)
     !! Run test on real values and print summary report for images.
 
     class(TestRealVal), intent(in) :: self
@@ -479,7 +479,7 @@ function runTestRealVal(self) result(tests_passed)
     if (img_passed == num_images()) tests_passed = tests_passed + 1
 end function runTestRealVal
 
-function runTestRealArrVal(self) result(tests_passed)
+recursive function runTestRealArrVal(self) result(tests_passed)
     !! Run test on real arrays and print summary report for images.
 
     class(TestRealArrVal), intent(in) :: self
